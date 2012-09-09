@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>action</key>
+	<false/>
+	<key>background</key>
+	<true/>
+	<key>category</key>
+	<string>APPLESCRIPTS</string>
+	<key>command</key>
+	<string>-- 初次使用请执行：vpn setup 密码与你的帐户密码一致（执行脚本需要）-- 使用时修改［defaultVPNService］为自己常用 VPN服务名称-- ［添加／删除］ 路由表并自动 ［连接／断开］：vpn [serviceCode](可选)-- 连接［备用VPN］：vpn serviceCode（见下文注释）-- ［更新路由表文件］，可2-3个月手动更新一次：vpn update-- ！！添加路由表需要管理员权限，执行后需要输入密码！！-- 路由表状态在［终端］查看：netstat -nr-- chnroutes.py 修改自：http://code.google.com/p/chnroutes/-- Developed by CrazyApi (http://imwuyu.me)property defaultVPNService : "VPN (IPSec)" -- 设置默认使用的VPNproperty resVPNService : "VPN (PPTP)" -- 设置备用VPN名称property serviceCode : "pptp" -- 使用备用VPN的口令property PPPoEName : "ADSL" -- 宽带拨号，名称on alfred_script(query)	if (query contains "update") then		do shell script "python chnroutes.py"	else if (query contains "setup") then		do shell script "Authenticate.app/Contents/MacOS/Authenticate"	else if (query contains serviceCode) then		my VPNControl(resVPNService)	else		if (run my isPPPoE) then			my VPNControl(defaultVPNService)		else			my VPNControl(resVPNService)		end if	end ifend alfred_scriptscript isPPPoE	tell application "System Events"		set s to service PPPoEName of network preferences		return connected of configuration of s	end tellend scripton VPNControl(vpnName)	tell application "System Events"		tell current location of network preferences			set VPNservice to service vpnName			set isConnected to connected of current configuration of VPNservice			if isConnected then				disconnect VPNservice				-- do shell script "./ip-down" with administrator privileges				do shell script "echo $(Authenticate.app/Contents/MacOS/Authenticate -get password) | sudo -S ./ip-down"			else				-- do shell script "./ip-up" with administrator privileges				do shell script "echo $(Authenticate.app/Contents/MacOS/Authenticate -get password) | sudo -S ./ip-up"				connect VPNservice			end if		end tell	end tell	do shell script "dscacheutil -flushcache"end VPNControl</string>
+	<key>disabled</key>
+	<false/>
+	<key>keyword</key>
+	<string>vpn</string>
+	<key>parameter</key>
+	<integer>1</integer>
+	<key>subtitle</key>
+	<string>为VPN添加国内路由表：vpn [update/serviceCode]</string>
+	<key>title</key>
+	<string>VPN China Routes</string>
+</dict>
+</plist>
